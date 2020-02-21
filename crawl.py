@@ -50,8 +50,8 @@ def crawl_user(uid):
     if not os.path.exists("data"):
         os.makedirs("data")
 
-    # with open("data/" + uid + ".json", "w") as fp:
-    #     fp.write(json.dumps(works, indent=2))
+    with open("data/" + uid + ".json", "w") as fp:
+        fp.write(json.dumps(works, indent=2))
 
     name = works[0]['user']['name']
 
@@ -59,7 +59,10 @@ def crawl_user(uid):
     # print(len(works))
     if not os.path.exists(dir):
         os.makedirs(dir)
-    crawl_work(dir, works[0])
+    print("开始爬取用户 " + name + "，保存在目录 " + dir)
+    print(" 共有" + str(len(works)) + "个作品")
+    for j in range(len(works)):
+        crawl_work(dir, works[j], j + 1)
 
 
 '''
@@ -69,24 +72,28 @@ def crawl_user(uid):
 '''
 
 
-def crawl_work(dir, work):
+def crawl_work(dir, work, wdx):
     w_type = work['workType']
-    w_caption = work['caption']
+    w_caption = re.sub(r"/","",work['caption'])
     w_time = time.strftime('%Y-%m-%d', time.localtime(work['timestamp'] / 1000))
 
     if w_type == 'vertical' or w_type == 'multiple':
         w_urls = work['imgUrls']
-        for i in range(len(w_urls)):
-            pic = dir + "/" + w_time + "_" + w_caption + "_" + str(i + 1) + ".jpg"
+        l = len(w_urls)
+        print("  " + str(wdx) + ")图集作品：" + w_caption + "，" + "共有" + str(l) + "张图片")
+        for i in range(l):
+            p_name = w_time + "_" + w_caption + "_" + str(i + 1) + ".jpg"
+            pic = dir + "/" + p_name
             if not os.path.exists(pic):
                 r = requests.get(w_urls[i])
                 r.raise_for_status()
-
                 with open(pic, "wb") as f:
                     f.write(r.content)
+                print("    " + str(i + 1) + "/" + str(l) + " 图片 " + p_name + " 下载成功 √")
+            else:
+                print("    " + str(i + 1) + "/" + str(l) + " 图片 " + p_name + " 已存在 √")
     elif w_type == 'video':
-        w_url = "https://live.kuaishou.com/u/" + work['user']['eid'] + "/" + work['id'] + param_did
-        print(w_url)
+        w_url = work_url + work['user']['eid'] + "/" + work['id'] + param_did
         res = requests.get(w_url, headers=headers)
         html = res.text
         soup = BeautifulSoup(html, "html.parser")
@@ -96,8 +103,9 @@ def crawl_work(dir, work):
         s = pattern.search(script.text).string
         v_url = s.split('playUrl":"')[1].split('.mp4')[0].encode('utf-8').decode('unicode-escape') + '.mp4'
         print(v_url)
-
-        video = dir + "/" + w_time + "_" + w_caption + ".mp4"
+        print("  " + str(wdx) + ".视频作品：" + w_caption)
+        v_name = w_time + "_" + w_caption + ".mp4"
+        video = dir + "/" + v_name
 
         if not os.path.exists(video):
             r = requests.get(v_url)
@@ -105,15 +113,32 @@ def crawl_work(dir, work):
 
             with open(video, "wb") as f:
                 f.write(r.content)
+            print("    视频 " + v_name + " 下载成功 √")
+        else:
+            print("    视频 " + v_name + " 已存在 √")
     else:
-        print("错误类型")
+        print("错误的类型")
+
+
+def read_preset():
+    p_path = "preset"
+    u_arr = []
+    if not os.path.exists(p_path):
+        print("创建预设文件 preset ...")
+        open(p_path, "w")
+    if not os.path.getsize(p_path):
+        print("请在预设文件 preset 中记录需要爬取的用户id，一行一个")
+        exit(0)
+    with open(p_path, "r") as f:
+        for line in f:
+            if line[0] != "#":
+                u_arr.append(line.strip())
+    return u_arr
 
 
 def crawl():
-    # crawl_user(uid="Zj08020125")
-    # crawl_user(uid="Caoyuying512629")
-    crawl_user(uid="Mengyi8080")
-    # crawl_user(uid="B879611875")
+    for uid in read_preset():
+        crawl_user(uid)
 
 
 if __name__ == "__main__":
