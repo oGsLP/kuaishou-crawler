@@ -63,7 +63,11 @@ def crawl_user(uid):
     print("开始爬取用户 " + name + "，保存在目录 " + dir)
     print(" 共有" + str(len(works)) + "个作品")
     for j in range(len(works)):
-        crawl_work(dir, works[j], j + 1)
+        crawl_work(uid, dir, works[j], j + 1)
+        time.sleep(1)
+    print("用户 " + name + "爬取完成!")
+    print()
+    time.sleep(1)
 
 
 '''
@@ -74,9 +78,10 @@ def crawl_user(uid):
 '''
 
 
-def crawl_work(dir, work, wdx):
+def crawl_work(uid, dir, work, wdx):
     w_type = work['workType']
-    w_caption = re.sub(r"/", "", work['caption'])
+    w_caption = work['caption']
+    w_name = re.sub(r'[\\/:*?"<>|\r\n]+', "", w_caption)
     w_time = time.strftime('%Y-%m-%d', time.localtime(work['timestamp'] / 1000))
 
     if w_type == 'vertical' or w_type == 'multiple' or w_type == "single":
@@ -84,7 +89,7 @@ def crawl_work(dir, work, wdx):
         l = len(w_urls)
         print("  " + str(wdx) + ")图集作品：" + w_caption + "，" + "共有" + str(l) + "张图片")
         for i in range(l):
-            p_name = w_time + "_" + w_caption + "_" + str(i + 1) + ".jpg"
+            p_name = w_time + "_" + w_name + "_" + str(i + 1) + ".jpg"
             pic = dir + "/" + p_name
             if not os.path.exists(pic):
                 r = requests.get(w_urls[i])
@@ -95,7 +100,7 @@ def crawl_work(dir, work, wdx):
             else:
                 print("    " + str(i + 1) + "/" + str(l) + " 图片 " + p_name + " 已存在 √")
     elif w_type == 'video':
-        w_url = work_url + work['user']['eid'] + "/" + work['id'] + param_did
+        w_url = work_url + uid + "/" + work['id'] + param_did
         res = requests.get(w_url, headers=headers)
         html = res.text
         soup = BeautifulSoup(html, "html.parser")
@@ -106,7 +111,7 @@ def crawl_work(dir, work, wdx):
         v_url = s.split('playUrl":"')[1].split('.mp4')[0].encode('utf-8').decode('unicode-escape') + '.mp4'
         print(v_url)
         print("  " + str(wdx) + ".视频作品：" + w_caption)
-        v_name = w_time + "_" + w_caption + ".mp4"
+        v_name = w_time + "_" + w_name + ".mp4"
         video = dir + "/" + v_name
 
         if not os.path.exists(video):
