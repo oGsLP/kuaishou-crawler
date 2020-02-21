@@ -11,10 +11,14 @@ import requests
 import json
 import time
 import os
+from bs4 import BeautifulSoup
+import re
 
 profile_url = "https://live.kuaishou.com/profile/"
 page_url = "https://live.kuaishou.com/m_graphql"
 work_url = "https://live.kuaishou.com/u/"
+
+param_did = "?did=web_67063b98a8884a80dccf7ed18172acfa"
 
 headers = {
     'accept': '*/*',
@@ -52,30 +56,64 @@ def crawl_user(uid):
     name = works[0]['user']['name']
 
     dir = "data/" + name + "(" + uid + ")/"
+    # print(len(works))
     if not os.path.exists(dir):
         os.makedirs(dir)
     crawl_work(dir, works[0])
 
-    # print(len(works))
+
+'''
+快手分为三种类型的作品，在作品里面表现为workType属性
+ * 其中两种图集: `vertical`和`multiple`，意味着拼接长图和多图，所有图片的链接在imgUrls里
+ * 视频: `video`
+'''
 
 
 def crawl_work(dir, work):
+    w_type = work['workType']
     w_caption = work['caption']
     w_time = time.strftime('%Y-%m-%d', time.localtime(work['timestamp'] / 1000))
-    w_urls = work['imgUrls']
 
-    for i in range(len(w_urls)):
-        pic = dir + "/" + w_caption + "_" + w_time + "_" + str(i + 1) + ".jpg"
-        if not os.path.exists(pic):
-            r = requests.get(w_urls[i])
+    if w_type == 'vertical' or w_type == 'multiple':
+        w_urls = work['imgUrls']
+        for i in range(len(w_urls)):
+            pic = dir + "/" + w_time + "_" + w_caption + "_" + str(i + 1) + ".jpg"
+            if not os.path.exists(pic):
+                r = requests.get(w_urls[i])
+                r.raise_for_status()
+
+                with open(pic, "wb") as f:
+                    f.write(r.content)
+    elif w_type == 'video':
+        w_url = "https://live.kuaishou.com/u/" + work['user']['eid'] + "/" + work['id'] + param_did
+        print(w_url)
+        res = requests.get(w_url, headers=headers)
+        html = res.text
+        soup = BeautifulSoup(html, "html.parser")
+
+        pattern = re.compile(r"playUrl", re.MULTILINE | re.DOTALL)
+        script = soup.find("script", text=pattern)
+        s = pattern.search(script.text).string
+        v_url = s.split('playUrl":"')[1].split('.mp4')[0].encode('utf-8').decode('unicode-escape') + '.mp4'
+        print(v_url)
+
+        video = dir + "/" + w_time + "_" + w_caption + ".mp4"
+
+        if not os.path.exists(video):
+            r = requests.get(v_url)
             r.raise_for_status()
 
-            with open(pic, "wb") as f:
+            with open(video, "wb") as f:
                 f.write(r.content)
+    else:
+        print("错误类型")
 
 
 def crawl():
-    crawl_user(uid="Zj08020125")
+    # crawl_user(uid="Zj08020125")
+    # crawl_user(uid="Caoyuying512629")
+    crawl_user(uid="Mengyi8080")
+    # crawl_user(uid="B879611875")
 
 
 if __name__ == "__main__":
