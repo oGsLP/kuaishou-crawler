@@ -80,7 +80,7 @@ def crawl_user(uid):
 
 def crawl_work(uid, dir, work, wdx):
     w_type = work['workType']
-    w_caption = work['caption']
+    w_caption = re.sub(r"\n"," ",work['caption'])
     w_name = re.sub(r'[\\/:*?"<>|\r\n]+', "", w_caption)
     w_time = time.strftime('%Y-%m-%d', time.localtime(work['timestamp'] / 1000))
 
@@ -109,7 +109,6 @@ def crawl_work(uid, dir, work, wdx):
         script = soup.find("script", text=pattern)
         s = pattern.search(script.text).string
         v_url = s.split('playUrl":"')[1].split('.mp4')[0].encode('utf-8').decode('unicode-escape') + '.mp4'
-        print(v_url)
         print("  " + str(wdx) + ".视频作品：" + w_caption)
         v_name = w_time + "_" + w_name + ".mp4"
         video = dir + "/" + v_name
