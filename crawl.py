@@ -50,8 +50,9 @@ def crawl_user(uid):
     if not os.path.exists("data"):
         os.makedirs("data")
 
-    with open("data/" + uid + ".json", "w") as fp:
-        fp.write(json.dumps(works, indent=2))
+    # 这两行代码将response写入json供分析
+    # with open("data/" + uid + ".json", "w") as fp:
+    #     fp.write(json.dumps(works, indent=2))
 
     name = works[0]['user']['name']
 
@@ -66,18 +67,19 @@ def crawl_user(uid):
 
 
 '''
-快手分为三种类型的作品，在作品里面表现为workType属性
+快手分为四种类型的作品，在作品里面表现为workType属性
  * 其中两种图集: `vertical`和`multiple`，意味着拼接长图和多图，所有图片的链接在imgUrls里
- * 视频: `video`
+ * 一种单张图片: `single` 图片链接也在imgUrls里
+ * 视频: `video` 需要解析html获得视频链接
 '''
 
 
 def crawl_work(dir, work, wdx):
     w_type = work['workType']
-    w_caption = re.sub(r"/","",work['caption'])
+    w_caption = re.sub(r"/", "", work['caption'])
     w_time = time.strftime('%Y-%m-%d', time.localtime(work['timestamp'] / 1000))
 
-    if w_type == 'vertical' or w_type == 'multiple':
+    if w_type == 'vertical' or w_type == 'multiple' or w_type == "single":
         w_urls = work['imgUrls']
         l = len(w_urls)
         print("  " + str(wdx) + ")图集作品：" + w_caption + "，" + "共有" + str(l) + "张图片")
