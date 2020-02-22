@@ -54,6 +54,9 @@ def crawl_user(uid):
     # with open("data/" + uid + ".json", "w") as fp:
     #     fp.write(json.dumps(works, indent=2))
 
+    # 防止该用户在直播，第一个作品默认为直播，导致获取信息为NoneType
+    if works[0]['id'] is None:
+        works.pop(0)
     name = works[0]['user']['name']
 
     dir = "data/" + name + "(" + uid + ")/"
@@ -80,7 +83,7 @@ def crawl_user(uid):
 
 def crawl_work(uid, dir, work, wdx):
     w_type = work['workType']
-    w_caption = re.sub(r"\n"," ",work['caption'])
+    w_caption = re.sub(r"\n", " ", work['caption'])
     w_name = re.sub(r'[\\/:*?"<>|\r\n]+', "", w_caption)
     w_time = time.strftime('%Y-%m-%d', time.localtime(work['timestamp'] / 1000))
 
