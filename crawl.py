@@ -74,9 +74,10 @@ def crawl_user(uid):
 
 
 '''
-快手分为四种类型的作品，在作品里面表现为workType属性
+快手分为五种类型的作品，在作品里面表现为workType属性
  * 其中两种图集: `vertical`和`multiple`，意味着拼接长图和多图，所有图片的链接在imgUrls里
  * 一种单张图片: `single` 图片链接也在imgUrls里
+ * K歌: `ksong` 图片链接一样，不考虑爬取音频...
  * 视频: `video` 需要解析html获得视频链接
 '''
 
@@ -87,7 +88,7 @@ def crawl_work(uid, dir, work, wdx):
     w_name = re.sub(r'[\\/:*?"<>|\r\n]+', "", w_caption)
     w_time = time.strftime('%Y-%m-%d', time.localtime(work['timestamp'] / 1000))
 
-    if w_type == 'vertical' or w_type == 'multiple' or w_type == "single":
+    if w_type == 'vertical' or w_type == 'multiple' or w_type == "single" or w_type == 'ksong':
         w_urls = work['imgUrls']
         l = len(w_urls)
         print("  " + str(wdx) + ")图集作品：" + w_caption + "，" + "共有" + str(l) + "张图片")
@@ -112,7 +113,7 @@ def crawl_work(uid, dir, work, wdx):
         script = soup.find("script", text=pattern)
         s = pattern.search(script.text).string
         v_url = s.split('playUrl":"')[1].split('.mp4')[0].encode('utf-8').decode('unicode-escape') + '.mp4'
-        print("  " + str(wdx) + ".视频作品：" + w_caption)
+        print("  " + str(wdx) + ")视频作品：" + w_caption)
         v_name = w_time + "_" + w_name + ".mp4"
         video = dir + "/" + v_name
 
