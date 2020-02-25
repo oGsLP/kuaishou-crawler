@@ -85,7 +85,7 @@ def crawl_user(uid):
 def crawl_work(uid, dir, work, wdx):
     w_type = work['workType']
     w_caption = re.sub(r"\s+", " ", work['caption'])
-    w_name = re.sub(r'[\\/:*?"<>|\r\n]+', "", w_caption)
+    w_name = re.sub(r'[\\/:*?"<>|\r\n]+', "", w_caption)[0:24]
     w_time = time.strftime('%Y-%m-%d', time.localtime(work['timestamp'] / 1000))
 
     if w_type == 'vertical' or w_type == 'multiple' or w_type == "single" or w_type == 'ksong':
