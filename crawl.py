@@ -42,7 +42,6 @@ def crawl_user(uid):
     payload = {"operationName": "privateFeedsQuery",
                "variables": {"principalId": uid, "pcursor": "", "count": 999},
                "query": "query privateFeedsQuery($principalId: String, $pcursor: String, $count: Int) {\n  privateFeeds(principalId: $principalId, pcursor: $pcursor, count: $count) {\n    pcursor\n    list {\n      id\n      thumbnailUrl\n      poster\n      workType\n      type\n      useVideoPlayer\n      imgUrls\n      imgSizes\n      magicFace\n      musicName\n      caption\n      location\n      liked\n      onlyFollowerCanComment\n      relativeHeight\n      timestamp\n      width\n      height\n      counts {\n        displayView\n        displayLike\n        displayComment\n        __typename\n      }\n      user {\n        id\n        eid\n        name\n        avatar\n        __typename\n      }\n      expTag\n      __typename\n    }\n    __typename\n  }\n}\n"}
-
     res = requests.post(page_url, headers=headers, json=payload)
 
     works = json.loads(res.content.decode(encoding='utf-8', errors='strict'))['data']['privateFeeds']['list']
@@ -65,6 +64,7 @@ def crawl_user(uid):
         os.makedirs(dir)
     print("开始爬取用户 " + name + "，保存在目录 " + dir)
     print(" 共有" + str(len(works)) + "个作品")
+
     for j in range(len(works)):
         crawl_work(uid, dir, works[j], j + 1)
         time.sleep(1)
@@ -84,7 +84,7 @@ def crawl_user(uid):
 
 def crawl_work(uid, dir, work, wdx):
     w_type = work['workType']
-    w_caption = re.sub(r"\n", " ", work['caption'])
+    w_caption = re.sub(r"\s+", " ", work['caption'])
     w_name = re.sub(r'[\\/:*?"<>|\r\n]+', "", w_caption)
     w_time = time.strftime('%Y-%m-%d', time.localtime(work['timestamp'] / 1000))
 
@@ -94,7 +94,7 @@ def crawl_work(uid, dir, work, wdx):
         print("  " + str(wdx) + ")图集作品：" + w_caption + "，" + "共有" + str(l) + "张图片")
         for i in range(l):
             p_name = w_time + "_" + w_name + "_" + str(i + 1) + ".jpg"
-            pic = dir + "/" + p_name
+            pic = dir + p_name
             if not os.path.exists(pic):
                 r = requests.get(w_urls[i])
                 r.raise_for_status()
@@ -115,7 +115,7 @@ def crawl_work(uid, dir, work, wdx):
         v_url = s.split('playUrl":"')[1].split('.mp4')[0].encode('utf-8').decode('unicode-escape') + '.mp4'
         print("  " + str(wdx) + ")视频作品：" + w_caption)
         v_name = w_time + "_" + w_name + ".mp4"
-        video = dir + "/" + v_name
+        video = dir + v_name
 
         if not os.path.exists(video):
             r = requests.get(v_url)
