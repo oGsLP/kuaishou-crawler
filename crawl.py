@@ -57,7 +57,7 @@ def crawl_user(uid):
     if works[0]['id'] is None:
         works.pop(0)
     name = re.sub(r'[\\/:*?"<>|\r\n]+', "", works[0]['user']['name'])
-    
+
     dir = "data/" + name + "(" + uid + ")/"
     # print(len(works))
     if not os.path.exists(dir):
@@ -68,6 +68,7 @@ def crawl_user(uid):
     for j in range(len(works)):
         crawl_work(uid, dir, works[j], j + 1)
         time.sleep(1)
+
     print("用户 " + name + "爬取完成!")
     print()
     time.sleep(1)
@@ -113,7 +114,10 @@ def crawl_work(uid, dir, work, wdx):
         script = soup.find("script", text=pattern)
         s = pattern.search(script.text).string
         v_url = s.split('playUrl":"')[1].split('.mp4')[0].encode('utf-8').decode('unicode-escape') + '.mp4'
-        print("  " + str(wdx) + ")视频作品：" + w_caption)
+        try:
+            print("  " + str(wdx) + ")视频作品：" + w_caption)
+        except:
+            print("  这里似乎有点小错误，已跳过")
         v_name = w_time + "_" + w_name + ".mp4"
         video = dir + v_name
 
