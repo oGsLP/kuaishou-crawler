@@ -56,8 +56,8 @@ def crawl_user(uid):
     # 防止该用户在直播，第一个作品默认为直播，导致获取信息为NoneType
     if works[0]['id'] is None:
         works.pop(0)
-    name = works[0]['user']['name']
-
+    name = re.sub(r'[\\/:*?"<>|\r\n]+', "", works[0]['user']['name'])
+    
     dir = "data/" + name + "(" + uid + ")/"
     # print(len(works))
     if not os.path.exists(dir):
