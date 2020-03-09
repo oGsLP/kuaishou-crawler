@@ -1,5 +1,8 @@
+build
+build.sh
 data
 .idea
 preset
 todo.txt
 test.py
+*.ico
