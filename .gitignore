@@ -6,3 +6,5 @@ preset
 todo.txt
 test.py
 *.ico
+dist/*.7z
+dist/*.zip
