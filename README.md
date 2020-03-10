@@ -46,10 +46,11 @@
     
 ## Release
 
+https://github.com/oGsLP/kuaishou-crawler/releases
+
 * 下载打包好的exe一键运行(点击download下载即可)
-    * [ks.exe](./dist/ks.exe)
-    * 推荐压缩包：[ks.tar](./dist/ks.tar)
-* 有三个要点
+    * ks.exe
+    * ks.7z
 
 
 ## Future
