@@ -19,8 +19,8 @@ class Crawler:
         "name": "kuaishou-crawler",
         "author": "oGsLP",
         "repository": "www.github.com/oGsLP/kuaishou-crawler",
-        "version": "0.3.0",
-        "publishDate": "20-03-10"
+        "version": "0.3.1",
+        "publishDate": "20-03-18"
     }
 
     __profile_url = "https://live.kuaishou.com/profile/"
@@ -39,7 +39,6 @@ class Crawler:
         'Origin': 'https://live.kuaishou.com',
         'Sec-Fetch-Mode': 'cors',
         'Sec-Fetch-Site': 'same-origin',
-
         # User-Agent/Cookie 根据自己的电脑修改
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
         'Cookie': ''
@@ -56,7 +55,7 @@ class Crawler:
 
     def set_did(self, did):
         self.__param_did = did
-        self.__headers['Cookie'] = 'did=' + did
+        self.__headers['Cookie'] = 'did=' + did + "; userId="
 
     def crawl(self):
         print("准备开始爬取，共有%d个用户..." % len(self.__crawl_list))
@@ -185,8 +184,12 @@ class Crawler:
         payload = {"operationName": "SearchOverviewQuery",
                    "variables": {"keyword": uid, "ussid": None},
                    "query": "query SearchOverviewQuery($keyword: String, $ussid: String) {\n  pcSearchOverview(keyword: $keyword, ussid: $ussid) {\n    list {\n      ... on SearchCategoryList {\n        type\n        list {\n          categoryId\n          categoryAbbr\n          title\n          src\n          __typename\n        }\n        __typename\n      }\n      ... on SearchUserList {\n        type\n        ussid\n        list {\n          id\n          name\n          living\n          avatar\n          sex\n          description\n          counts {\n            fan\n            follow\n            photo\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      ... on SearchLivestreamList {\n        type\n        lssid\n        list {\n          user {\n            id\n            avatar\n            name\n            __typename\n          }\n          poster\n          coverUrl\n          caption\n          id\n          playUrls {\n            quality\n            url\n            __typename\n          }\n          quality\n          gameInfo {\n            category\n            name\n            pubgSurvival\n            type\n            kingHero\n            __typename\n          }\n          hasRedPack\n          liveGuess\n          expTag\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n"}
+
         res = requests.post(self.__data_url, headers=self.__headers, json=payload)
         dt = json.loads(res.content.decode(encoding='utf-8', errors='strict'))['data']
+        # with open("data/jj_" + uid + ".json", "w") as fp:
+        #     fp.write(json.dumps(dt, indent=2))
+
         return dt['pcSearchOverview']['list'][1]['list'][0]['id']
 
     def __intro(self):
