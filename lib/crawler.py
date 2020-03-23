@@ -10,7 +10,6 @@ import requests
 import json
 import time
 import os
-from bs4 import BeautifulSoup
 import re
 
 
@@ -19,17 +18,17 @@ class Crawler:
         "name": "kuaishou-crawler",
         "author": "oGsLP",
         "repository": "www.github.com/oGsLP/kuaishou-crawler",
-        "version": "0.3.1",
-        "publishDate": "20-03-18"
+        "version": "0.4.0",
+        "publishDate": "20-03-23"
     }
 
     __profile_url = "https://live.kuaishou.com/profile/"
     __data_url = "https://live.kuaishou.com/m_graphql"
-    __work_url = "https://live.kuaishou.com/u/"
+    __work_url = "https://v.kuaishou.com/fw/photo/"
 
     __param_did = ""
 
-    __headers = {
+    __headers_web = {
         'accept': '*/*',
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7',
@@ -43,6 +42,9 @@ class Crawler:
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
         'Cookie': ''
     }
+    __headers_mobile = {
+        'User-Agent': 'Mozilla/5.0 (Linux; U; Android 8.1.0; zh-cn; BLA-AL00 Build/HUAWEIBLA-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/57.0.2987.132 MQQBrowser/8.9 Mobile Safari/537.36'
+    }
 
     __crawl_list = []
 
@@ -55,7 +57,7 @@ class Crawler:
 
     def set_did(self, did):
         self.__param_did = did
-        self.__headers['Cookie'] = 'did=' + did + "; userId="
+        self.__headers_web['Cookie'] = 'did=' + did + "; userId="
 
     def crawl(self):
         print("准备开始爬取，共有%d个用户..." % len(self.__crawl_list))
@@ -74,7 +76,7 @@ class Crawler:
         payload = {"operationName": "privateFeedsQuery",
                    "variables": {"principalId": uid, "pcursor": "", "count": 999},
                    "query": "query privateFeedsQuery($principalId: String, $pcursor: String, $count: Int) {\n  privateFeeds(principalId: $principalId, pcursor: $pcursor, count: $count) {\n    pcursor\n    list {\n      id\n      thumbnailUrl\n      poster\n      workType\n      type\n      useVideoPlayer\n      imgUrls\n      imgSizes\n      magicFace\n      musicName\n      caption\n      location\n      liked\n      onlyFollowerCanComment\n      relativeHeight\n      timestamp\n      width\n      height\n      counts {\n        displayView\n        displayLike\n        displayComment\n        __typename\n      }\n      user {\n        id\n        eid\n        name\n        avatar\n        __typename\n      }\n      expTag\n      __typename\n    }\n    __typename\n  }\n}\n"}
-        res = requests.post(self.__data_url, headers=self.__headers, json=payload)
+        res = requests.post(self.__data_url, headers=self.__headers_web, json=payload)
 
         works = json.loads(res.content.decode(encoding='utf-8', errors='strict'))['data']['privateFeeds']['list']
 
@@ -139,15 +141,17 @@ class Crawler:
                 else:
                     print("    " + str(i + 1) + "/" + str(l) + " 图片 " + p_name + " 已存在 √")
         elif w_type == 'video':
-            w_url = self.__work_url + uid + "/" + work['id'] + "?did=" + self.__param_did
-            res = requests.get(w_url, headers=self.__headers)
+            w_url = self.__work_url + work['id']
+            res = requests.get(w_url, headers=self.__headers_mobile,
+                               params={"fid": 1841409882, "cc": "share_copylink", "shareId": "143108986354"})
             html = res.text
-            soup = BeautifulSoup(html, "html.parser")
+            waitreplace = work['id'] + '&#34.*?&#34;srcNoMark&#34;:&#34;(.*?)&#34;'
 
-            pattern = re.compile(r"playUrl", re.MULTILINE | re.DOTALL)
-            script = soup.find("script", text=pattern)
-            s = pattern.search(script.text).string
-            v_url = s.split('playUrl":"')[1].split('.mp4')[0].encode('utf-8').decode('unicode-escape') + '.mp4'
+            v_url = re.findall(waitreplace, html)
+            # pattern = re.compile(r"playUrl", re.MULTILINE | re.DOTALL)
+            # script = soup.find("script", text=pattern)
+            # s = pattern.search(script.text).string
+            # v_url = s.split('playUrl":"')[1].split('.mp4')[0].encode('utf-8').decode('unicode-escape') + '.mp4'
             try:
                 print("  " + str(wdx) + ")视频作品：" + w_caption)
             except:
@@ -155,15 +159,18 @@ class Crawler:
             v_name = w_time + "_" + w_name + ".mp4"
             video = dir + v_name
 
-            if not os.path.exists(video):
-                r = requests.get(v_url)
-                r.raise_for_status()
+            if v_url:
+                if not os.path.exists(video):
+                    r = requests.get(v_url[0])
+                    r.raise_for_status()
 
-                with open(video, "wb") as f:
-                    f.write(r.content)
-                print("    视频 " + v_name + " 下载成功 √")
+                    with open(video, "wb") as f:
+                        f.write(r.content)
+                    print("    视频 " + v_name + " 下载成功 √")
+                else:
+                    print("    视频 " + v_name + " 已存在 √")
             else:
-                print("    视频 " + v_name + " 已存在 √")
+                print("未找到视频")
         else:
             print("错误的类型")
 
