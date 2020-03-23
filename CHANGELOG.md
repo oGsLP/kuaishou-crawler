@@ -5,7 +5,7 @@
 ### v0.4.0(2020-03-23)
 
 * 修复id转eid的一些bug
-* 从该版本开始，爬取视频均为无水印 **感谢@[tjftjftjf](github.com/tjftjftjf)**
+* 从该版本开始，爬取视频均为无水印 **感谢@[tjftjftjf](https://github.com/tjftjftjf)**
 
 ### v0.3.0(2020-03-10)
 
