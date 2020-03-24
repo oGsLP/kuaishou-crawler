@@ -4,7 +4,7 @@
 
 ## Latest 
 
-### Version 0.4.0 (2020-03-23)
+### Version 0.4.1 (2020-03-24)
 ##### &emsp;View [Change Log](./CHANGELOG.md)
 
 * 现在已经提供exe版本一键执行 [查看](#release) | 或者查看如何运行代码 [查看](#run)

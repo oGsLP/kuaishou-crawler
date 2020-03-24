@@ -12,20 +12,20 @@ import time
 import os
 import re
 
+INFO = {
+    "name": "kuaishou-crawler",
+    "author": "oGsLP",
+    "repository": "www.github.com/oGsLP/kuaishou-crawler",
+    "version": "0.4.1",
+    "publishDate": "20-03-24"
+}
+
+PROFILE_URL = "https://live.kuaishou.com/profile/"
+DATA_URL = "https://live.kuaishou.com/m_graphql"
+WORK_URL = "https://v.kuaishou.com/fw/photo/"
+
 
 class Crawler:
-    __info = {
-        "name": "kuaishou-crawler",
-        "author": "oGsLP",
-        "repository": "www.github.com/oGsLP/kuaishou-crawler",
-        "version": "0.4.0",
-        "publishDate": "20-03-23"
-    }
-
-    __profile_url = "https://live.kuaishou.com/profile/"
-    __data_url = "https://live.kuaishou.com/m_graphql"
-    __work_url = "https://v.kuaishou.com/fw/photo/"
-
     __param_did = ""
 
     __headers_web = {
@@ -48,6 +48,9 @@ class Crawler:
 
     __crawl_list = []
 
+    __date_cache = ""
+    __date_pic_count = 0
+
     def __init__(self, prod=True):
         self.__intro()
         if prod:
@@ -64,6 +67,8 @@ class Crawler:
         print()
         time.sleep(2)
         for uid in self.__crawl_list:
+            self.__date_cache = ""
+            self.__date_count = 0
             self.__crawl_user(uid)
 
     def add_to_list(self, uid):
@@ -76,7 +81,7 @@ class Crawler:
         payload = {"operationName": "privateFeedsQuery",
                    "variables": {"principalId": uid, "pcursor": "", "count": 999},
                    "query": "query privateFeedsQuery($principalId: String, $pcursor: String, $count: Int) {\n  privateFeeds(principalId: $principalId, pcursor: $pcursor, count: $count) {\n    pcursor\n    list {\n      id\n      thumbnailUrl\n      poster\n      workType\n      type\n      useVideoPlayer\n      imgUrls\n      imgSizes\n      magicFace\n      musicName\n      caption\n      location\n      liked\n      onlyFollowerCanComment\n      relativeHeight\n      timestamp\n      width\n      height\n      counts {\n        displayView\n        displayLike\n        displayComment\n        __typename\n      }\n      user {\n        id\n        eid\n        name\n        avatar\n        __typename\n      }\n      expTag\n      __typename\n    }\n    __typename\n  }\n}\n"}
-        res = requests.post(self.__data_url, headers=self.__headers_web, json=payload)
+        res = requests.post(DATA_URL, headers=self.__headers_web, json=payload)
 
         works = json.loads(res.content.decode(encoding='utf-8', errors='strict'))['data']['privateFeeds']['list']
 
@@ -124,16 +129,24 @@ class Crawler:
         w_caption = re.sub(r"\s+", " ", work['caption'])
         w_name = re.sub(r'[\\/:*?"<>|\r\n]+', "", w_caption)[0:24]
         w_time = time.strftime('%Y-%m-%d', time.localtime(work['timestamp'] / 1000))
+        w_index = ""
+        if self.__date_cache == w_time:
+            self.__date_count = self.__date_count + 1
+            if self.__date_count > 0:
+                w_index = "(%d)" % self.__date_count
+        else:
+            self.__date_cache = w_time
+            self.__date_count = 0
 
         if w_type == 'vertical' or w_type == 'multiple' or w_type == "single" or w_type == 'ksong':
             w_urls = work['imgUrls']
             l = len(w_urls)
             print("  " + str(wdx) + ")图集作品：" + w_caption + "，" + "共有" + str(l) + "张图片")
             for i in range(l):
-                p_name = w_time + "_" + w_name + "_" + str(i + 1) + ".jpg"
+                p_name = w_time + w_index + "_" + w_name + "_" + str(i + 1)+'.jpg'
                 pic = dir + p_name
                 if not os.path.exists(pic):
-                    r = requests.get(w_urls[i])
+                    r = requests.get(w_urls[i].replace("webp","jpg"))
                     r.raise_for_status()
                     with open(pic, "wb") as f:
                         f.write(r.content)
@@ -141,7 +154,7 @@ class Crawler:
                 else:
                     print("    " + str(i + 1) + "/" + str(l) + " 图片 " + p_name + " 已存在 √")
         elif w_type == 'video':
-            w_url = self.__work_url + work['id']
+            w_url = WORK_URL + work['id']
             res = requests.get(w_url, headers=self.__headers_mobile,
                                params={"fid": 1841409882, "cc": "share_copylink", "shareId": "143108986354"})
             html = res.text
@@ -156,7 +169,7 @@ class Crawler:
                 print("  " + str(wdx) + ")视频作品：" + w_caption)
             except:
                 print("  这里似乎有点小错误，已跳过")
-            v_name = w_time + "_" + w_name + ".mp4"
+            v_name = w_time + w_index + "_" + w_name + ".mp4"
             video = dir + v_name
 
             if v_url:
@@ -192,7 +205,7 @@ class Crawler:
                    "variables": {"keyword": uid, "ussid": None},
                    "query": "query SearchOverviewQuery($keyword: String, $ussid: String) {\n  pcSearchOverview(keyword: $keyword, ussid: $ussid) {\n    list {\n      ... on SearchCategoryList {\n        type\n        list {\n          categoryId\n          categoryAbbr\n          title\n          src\n          __typename\n        }\n        __typename\n      }\n      ... on SearchUserList {\n        type\n        ussid\n        list {\n          id\n          name\n          living\n          avatar\n          sex\n          description\n          counts {\n            fan\n            follow\n            photo\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      ... on SearchLivestreamList {\n        type\n        lssid\n        list {\n          user {\n            id\n            avatar\n            name\n            __typename\n          }\n          poster\n          coverUrl\n          caption\n          id\n          playUrls {\n            quality\n            url\n            __typename\n          }\n          quality\n          gameInfo {\n            category\n            name\n            pubgSurvival\n            type\n            kingHero\n            __typename\n          }\n          hasRedPack\n          liveGuess\n          expTag\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n"}
 
-        res = requests.post(self.__data_url, headers=self.__headers, json=payload)
+        res = requests.post(DATA_URL, headers=self.__headers_web, json=payload)
         dt = json.loads(res.content.decode(encoding='utf-8', errors='strict'))['data']
         # with open("data/jj_" + uid + ".json", "w") as fp:
         #     fp.write(json.dumps(dt, indent=2))
@@ -201,6 +214,6 @@ class Crawler:
 
     def __intro(self):
         print()
-        print("|  %s (v%s %s)" % (self.__info["name"], self.__info["version"], self.__info["publishDate"]))
-        print("|  本程序由%s提供, %s, 喜欢的话可以给个star >_<" % (self.__info["author"], self.__info["repository"]))
+        print("|  %s (v%s %s)" % (INFO["name"], INFO["version"], INFO["publishDate"]))
+        print("|  本程序由%s提供, %s, 喜欢的话可以给个star >_<" % (INFO["author"], INFO["repository"]))
         print()
