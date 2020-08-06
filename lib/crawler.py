@@ -16,8 +16,8 @@ INFO = {
     "name": "kuaishou-crawler",
     "author": "oGsLP",
     "repository": "www.github.com/oGsLP/kuaishou-crawler",
-    "version": "0.4.1",
-    "publishDate": "20-03-24"
+    "version": "0.5.0",
+    "publishDate": "20-08-06"
 }
 
 PROFILE_URL = "https://live.kuaishou.com/profile/"
