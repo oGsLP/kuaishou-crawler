@@ -8,4 +8,5 @@ test.py
 *.ico
 dist/*.7z
 dist/*.zip
+json/*
 tiezi.md
