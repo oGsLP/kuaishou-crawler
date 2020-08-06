@@ -65,3 +65,14 @@ https://github.com/oGsLP/kuaishou-crawler/releases
 ## Again
 
 **本代码仅供学习使用，不可违反法律爬取视频，以及私自盗用搬运视频，后果自负**
+
+## Else
+
+爬虫源码免费开源，作者维护不易，喜欢的可以随意打赏一些>_<
+
+<center>
+    <figure>
+        <img src="pics/alipay.JPG" height=360px style="margin-right:25px"/>
+        <img src="pics/wechat.JPG" height=360px />
+    </figure>
+</center>
