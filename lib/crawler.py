@@ -61,8 +61,7 @@ class Crawler:
     def set_did(self, did):
         self.__param_did = did
         self.__headers_web['Cookie'] = 'did=' + did + "; userId="
-        # todo figure out how to get this did_web
-        self.__headers_mobile['Cookie'] = 'did=' + 'web_1ab324e23bde4e20a8082b38a1c0bc81'
+        self.__headers_mobile['Cookie'] = 'did=' + did
 
     def crawl(self):
         print("准备开始爬取，共有%d个用户..." % len(self.__crawl_list))
