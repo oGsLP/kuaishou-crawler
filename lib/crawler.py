@@ -166,7 +166,7 @@ class Crawler:
 
             v_url = re.search(pattern, html).group(1)+".mp4"
 
-            print(v_url)
+            # print(v_url)
             # pattern = re.compile(r"playUrl", re.MULTILINE | re.DOTALL)
             # script = soup.find("script", text=pattern)
             # s = pattern.search(script.text).string
